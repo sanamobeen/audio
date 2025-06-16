@@ -7,3 +7,15 @@ class AudioSerializer(serializers.ModelSerializer):
         model = Audio
         fields = ["user", "text", "audio_file", "uploaded_at", "converted_text"]
         read_only_fields = ["user", "audio_file", "uploaded_at", "converted_text"]
+
+class SelectLanguageSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    languages = serializers.ListField(
+        child=serializers.ChoiceField(choices=[
+            ('en', 'English'),
+            ('fr', 'French'),
+            ('ur', 'Urdu'),
+            ('es', 'Spanish'),
+            ('de', 'German'),
+        ])
+    )
