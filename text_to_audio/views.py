@@ -2,6 +2,14 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+# from gtts import
+from django.core.files import File
+from .models import Audio
+import os
+from django.http import FileResponse, Http404
+from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.core.files import File
 from django.http import FileResponse
@@ -37,10 +45,13 @@ class TextToSpeechView(APIView):
             with open(file_path, "rb") as f:
                 audio.audio_file.save(file_name, File(f), save=True)
 
-            return Response({
-                "message": "Audio generated successfully",
-                "audio_url": request.build_absolute_uri(audio.audio_file.url),
-            }, status=201)
+            return Response(
+                {
+                    "message": "Audio generated successfully",
+                    "audio_url": request.build_absolute_uri(audio.audio_file.url),
+                },
+                status=201,
+            )
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
@@ -80,11 +91,15 @@ class SelectLanguageOfAudio(APIView):
                 if not voice:
                     raise Exception(f"Voice for language '{lang}' is not configured.")
 
-                filename = f"tts_{lang}_{request.user.id}_{Audio.objects.count() + 1}.mp3"
+                filename = (
+                    f"tts_{lang}_{request.user.id}_{Audio.objects.count() + 1}.mp3"
+                )
                 filepath = os.path.join("media", "generated", filename)
                 os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-                asyncio.run(edge_tts.Communicate(text=translated, voice=voice).save(filepath))
+                asyncio.run(
+                    edge_tts.Communicate(text=translated, voice=voice).save(filepath)
+                )
 
                 # Save in DB
                 audio = Audio(user=request.user, text=text, language=lang)
@@ -92,11 +107,13 @@ class SelectLanguageOfAudio(APIView):
                     audio.audio_file.save(filename, File(f), save=True)
 
                 audio_url = request.build_absolute_uri(audio.audio_file.url)
-                response_data.append({
-                    "language": lang,
-                    "translated_text": translated,
-                    "audio_url": audio_url,
-                })
+                response_data.append(
+                    {
+                        "language": lang,
+                        "translated_text": translated,
+                        "audio_url": audio_url,
+                    }
+                )
 
             except Exception as e:
                 response_data.append({"language": lang, "error": str(e)})
