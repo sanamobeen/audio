@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "text_to_audio",
     "voice_changer",
+    "feedback",
 ]
 AUTH_USER_MODEL = "accounts.User"
 REST_FRAMEWORK = {
